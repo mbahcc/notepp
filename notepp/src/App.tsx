@@ -20,7 +20,7 @@ declare module "slate" {
 const initialValue: Descendant[] = [
   {
     type: "paragraph",
-    children: [{ text: "Welcome to Notepp. Type anywhere to get started!" }],
+    children: [{ text: "Welcome to npp. Edit this to get started!" }],
   },
 ];
 
@@ -43,8 +43,8 @@ function App() {
               style={{
                 width: "1300px",
                 height: "600px",
-                padding: "50px",
                 outline: "none",
+                padding: "20px",
               }}
             />
           </div>

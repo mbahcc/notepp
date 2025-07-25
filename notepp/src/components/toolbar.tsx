@@ -10,7 +10,7 @@ import FormatBulletedList from "./toolbar-components/format-bulletedlist";
 import FormatNumberedList from "./toolbar-components/format-numberedlist";
 
 function Toolbar() {
-  const [title, setTitle] = useState("Note++ Document");
+  const [title, setTitle] = useState("Untitled Npp Document");
   return (
     <div className="toolbar-container">
       <div
