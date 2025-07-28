@@ -1,9 +1,24 @@
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
-import React, { useState } from "react";
+import { useState } from "react";
+import { useSlate } from "slate-react";
+import { Editor } from "slate";
 
 function FormatBold() {
-  const [isBold, setIsBold] = useState(false);
+  const editor = useSlate();
   const [isHovered, setIsHovered] = useState(false);
+
+  const marks = Editor.marks(editor);
+  const isBold = marks?.bold === true;
+
+  const toggleBold = () => {
+    if (isBold) {
+      Editor.removeMark(editor, "bold");
+      console.log("Bold removed");
+    } else {
+      Editor.addMark(editor, "bold", true);
+      console.log("Bold added");
+    }
+  };
 
   const handleBackgroundColor = () => {
     if (isHovered) return "#e0e0e0";
@@ -16,7 +31,7 @@ function FormatBold() {
     <div
       className="tool-bar-inner-container-icon"
       style={{ backgroundColor: handleBackgroundColor() }}
-      onClick={() => setIsBold(!isBold)}
+      onClick={toggleBold}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

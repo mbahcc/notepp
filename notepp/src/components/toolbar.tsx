@@ -2,7 +2,6 @@ import { useState } from "react";
 import FormatBold from "./toolbar-components/format-bold";
 import FormatItalic from "./toolbar-components/format-italics";
 import FormatUnderline from "./toolbar-components/format-underline";
-import FormatInsertLink from "./toolbar-components/format-insertLink";
 import FormatAlignLeft from "./toolbar-components/format-alignleft";
 import FormatAlignCenter from "./toolbar-components/format-aligncenter";
 import FormatAlignRight from "./toolbar-components/format-alignright";
@@ -69,7 +68,7 @@ function Toolbar() {
               <FormatBold />
               <FormatItalic />
               <FormatUnderline />
-              <FormatInsertLink />
+              {/* <FormatInsertLink /> */}
               <FormatAlignLeft />
               <FormatAlignCenter />
               <FormatAlignRight />
