@@ -1,13 +1,24 @@
 import "./App.css";
 import Toolbar from "./components/toolbar";
 import { useState, useCallback } from "react";
-import { createEditor } from "slate";
+import {
+  createEditor,
+  Range,
+  Point,
+  Element as SlateElement,
+  Node,
+  Transforms,
+} from "slate";
 import { Slate, Editable, withReact, ReactEditor } from "slate-react";
 import type { BaseEditor, Descendant } from "slate";
 import { withHistory } from "slate-history";
 import { Editor } from "slate";
 
-type CustomElement = { type: "paragraph"; children: CustomText[] };
+type CustomElement = {
+  type: "paragraph" | "bulleted-list" | "numbered-list" | "list-item";
+  children: CustomText[];
+  align?: "left" | "center" | "right";
+};
 type CustomText = {
   text: string;
   bold?: boolean;
@@ -31,8 +42,13 @@ const initialValue: Descendant[] = [
 
 function App() {
   const [editor] = useState(() => withHistory(withReact(createEditor())));
+
   const renderLeaf = useCallback((props: LeafProps) => {
     return <Leaf {...props} />;
+  }, []);
+
+  const renderElement = useCallback((props: ElementProps) => {
+    return <CustomElementComponent {...props} />;
   }, []);
 
   return (
@@ -50,6 +66,7 @@ function App() {
           <div className="app-page">
             <Editable
               renderLeaf={renderLeaf}
+              renderElement={renderElement}
               onKeyDown={(event) => {
                 // Handles indentation
                 if (event.key === "Tab") {
@@ -57,6 +74,37 @@ function App() {
                   const { selection } = editor;
                   if (selection) {
                     Editor.insertText(editor, "    ");
+                  }
+                }
+                if (event.key === "Backspace") {
+                  const { selection } = editor;
+                  if (selection && Range.isCollapsed(selection)) {
+                    const [match] = Editor.nodes(editor, {
+                      match: (n: Node) =>
+                        !Editor.isEditor(n) &&
+                        SlateElement.isElement(n) &&
+                        n.type === "list-item",
+                    });
+
+                    if (match) {
+                      const [, path] = match;
+                      const start = Editor.start(editor, path);
+
+                      if (Point.equals(selection.anchor, start)) {
+                        event.preventDefault();
+                        // Unwrap from the parent list ('bulleted-list' or 'numbered-list')
+                        Transforms.unwrapNodes(editor, {
+                          match: (n) =>
+                            !Editor.isEditor(n) &&
+                            SlateElement.isElement(n) &&
+                            (n.type === "bulleted-list" ||
+                              n.type === "numbered-list"),
+                          split: true,
+                        });
+                        // Convert the 'list-item' into a 'paragraph'
+                        Transforms.setNodes(editor, { type: "paragraph" });
+                      }
+                    }
                   }
                 }
                 if (!event.ctrlKey) {
@@ -131,6 +179,12 @@ function App() {
   );
 }
 
+interface ElementProps {
+  attributes: any;
+  children: React.ReactNode;
+  element: CustomElement;
+}
+
 interface LeafProps {
   attributes: any;
   children: React.ReactNode;
@@ -140,6 +194,45 @@ interface LeafProps {
     underline?: boolean;
   };
 }
+
+const CustomElementComponent = (props: ElementProps) => {
+  const style = {
+    textAlign: props.element.align || ("left" as "left" | "center" | "right"),
+  };
+
+  switch (props.element.type) {
+    case "bulleted-list":
+      return (
+        <ul {...props.attributes} style={style}>
+          {props.children}
+        </ul>
+      );
+    case "numbered-list":
+      return (
+        <ol {...props.attributes} style={style}>
+          {props.children}
+        </ol>
+      );
+    case "list-item":
+      return (
+        <li {...props.attributes} style={style}>
+          {props.children}
+        </li>
+      );
+    case "paragraph":
+      return (
+        <p {...props.attributes} style={style}>
+          {props.children}
+        </p>
+      );
+    default:
+      return (
+        <div {...props.attributes} style={style}>
+          {props.children}
+        </div>
+      );
+  }
+};
 
 const Leaf = (props: LeafProps) => {
   return (
