@@ -7,6 +7,7 @@ import FormatAlignCenter from "./toolbar-components/format-aligncenter";
 import FormatAlignRight from "./toolbar-components/format-alignright";
 import FormatBulletedList from "./toolbar-components/format-bulletedlist";
 import FormatNumberedList from "./toolbar-components/format-numberedlist";
+import SaveButton from "./save-button";
 
 function Toolbar() {
   const [title, setTitle] = useState("Untitled Npp Document");
@@ -74,6 +75,7 @@ function Toolbar() {
               <FormatAlignRight />
               <FormatBulletedList />
               <FormatNumberedList />
+              <SaveButton />
             </div>
           </div>
         </div>
