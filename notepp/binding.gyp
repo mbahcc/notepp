@@ -4,14 +4,11 @@
       "target_name": "addon",
       "sources": [
         "src/binding.cpp",
-        "src/io/FileManager.cpp"
+        "src/file-io/FileManager.cpp"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
         "include"
-      ],
-      "dependencies": [
-        "<!(node -p \"require('node-addon-api').targets\")"
       ],
       "cflags!": [ "-fno-exceptions" ],
       "cflags_cc!": [ "-fno-exceptions" ],
