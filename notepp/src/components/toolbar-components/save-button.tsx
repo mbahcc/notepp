@@ -1,9 +1,13 @@
 import IconButton from "@mui/material/IconButton";
 import SaveIcon from "@mui/icons-material/Save";
 
-function SaveButton() {
+interface SaveButtonProps {
+  onSave: () => void;
+}
+
+function SaveButton({ onSave }: SaveButtonProps) {
   return (
-    <IconButton aria-label="save">
+    <IconButton aria-label="save" onClick={onSave}>
       <SaveIcon />
     </IconButton>
   );

@@ -16,7 +16,6 @@ private:
     std::string fileName;
 
 public:
-    // Constructor & Destructor
     FileManager(const std::string &path, const std::string &name);
     FileManager() = default;
 

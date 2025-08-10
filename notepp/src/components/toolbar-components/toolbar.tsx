@@ -1,16 +1,31 @@
-import { useState } from "react";
-import FormatBold from "./toolbar-components/format-bold";
-import FormatItalic from "./toolbar-components/format-italics";
-import FormatUnderline from "./toolbar-components/format-underline";
-import FormatAlignLeft from "./toolbar-components/format-alignleft";
-import FormatAlignCenter from "./toolbar-components/format-aligncenter";
-import FormatAlignRight from "./toolbar-components/format-alignright";
-import FormatBulletedList from "./toolbar-components/format-bulletedlist";
-import FormatNumberedList from "./toolbar-components/format-numberedlist";
-import SaveButton from "./save-button";
+import {
+  FormatBold,
+  FormatItalic,
+  FormatUnderline,
+  FormatAlignLeft,
+  FormatAlignCenter,
+  FormatAlignRight,
+  FormatBulletedList,
+  FormatNumberedList,
+  SaveButton,
+  OpenFile,
+} from "./index";
 
-function Toolbar() {
-  const [title, setTitle] = useState("Untitled Npp Document");
+interface ToolbarProps {
+  onSave: () => void;
+  onOpen: () => void;
+  filePath: string;
+}
+
+function Toolbar({ onSave, onOpen, filePath }: ToolbarProps) {
+  // --- DEBUGGING LINE ---
+  // Let's see what filePath this component receives every time it renders.
+  console.log("Toolbar component rendered with filePath:", filePath);
+  // --------------------
+
+  // Extract just the filename from the full path for display.
+  const fileName = filePath.split(/[\\/]/).pop() || "Untitled";
+
   return (
     <div className="toolbar-container">
       <div
@@ -21,22 +36,25 @@ function Toolbar() {
           paddingTop: "20px",
         }}
       >
-        <input
-          type="text"
+        <div
           id="document-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
           style={{
             backgroundColor: "#f5f5f5",
             borderRadius: "50px",
             height: "35px",
             textAlign: "center",
+            paddingTop: "5px",
+            paddingBottom: "5px",
+            paddingRight: "10px",
+            paddingLeft: "10px",
             fontSize: "20px",
             border: "1px solid #e0e0e0",
             boxShadow:
               "0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)",
           }}
-        />
+        >
+          {fileName}
+        </div>
       </div>
       <div
         style={{
@@ -75,7 +93,8 @@ function Toolbar() {
               <FormatAlignRight />
               <FormatBulletedList />
               <FormatNumberedList />
-              <SaveButton />
+              <SaveButton onSave={onSave} />
+              <OpenFile onOpen={onOpen} />
             </div>
           </div>
         </div>

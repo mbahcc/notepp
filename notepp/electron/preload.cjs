@@ -1,21 +1,12 @@
 // preload.cjs - Allows Node.js APIs to react app
 
+console.log("--- PRELOAD SCRIPT HAS RUN ---");
+
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    saveFile: (filePath, content) => ipcRenderer.invoke('file:save', filePath, content),
-    readFile: (filePath) => ipcRenderer.invoke('file:read', filePath),
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-    const replaceText = (selector, text) => {
-        const element = document.getElementById(selector);
-        if (element) {
-            element.innerText = text;
-        }
-    };
-
-    for (const dependency of ['chrome', 'node', 'electron']) {
-        replaceText(`${dependency}-version`, process.versions[dependency]);
-    }
+  saveFile: (filePath, content) => ipcRenderer.invoke('file:save', filePath, content),
+  readFile: (filePath) => ipcRenderer.invoke('file:read', filePath),
+  showSaveDialog: (content) => ipcRenderer.invoke('show-save-dialog', content),
+  showOpenDialog: () => ipcRenderer.invoke('show-open-dialog')
 });

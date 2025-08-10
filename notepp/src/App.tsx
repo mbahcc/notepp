@@ -1,81 +1,60 @@
 import "./App.css";
-import Toolbar from "./components/toolbar";
-import { useState, useCallback, useEffect } from "react";
+import Toolbar from "./components/toolbar-components/toolbar";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import {
   createEditor,
+  Transforms,
+  Editor,
+  Node,
+  Element as SlateElement,
   Range,
   Point,
-  Element as SlateElement,
-  Node,
-  Transforms,
 } from "slate";
-import { Slate, Editable, withReact, ReactEditor } from "slate-react";
-import type { BaseEditor, Descendant } from "slate";
+import type { Descendant } from "slate";
+import { Slate, Editable, withReact } from "slate-react";
 import { withHistory } from "slate-history";
-import { Editor } from "slate";
-import { lazy, Suspense } from "react";
+import { monacoToText, slateToText } from "./functions/slate-functions";
+import { initialValue } from "./constants/app-constants";
+import "./types/slate";
+import type { CustomElement } from "./types/slate";
 
 // Load Monaco Editor dynamically
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
-
-// Convert Slate content to plain text
-const slateToText = (nodes: Descendant[]): string => {
-  return nodes.map((n) => Node.string(n)).join("\n");
-};
-
-// Convert Monaco content to plain text
-const monacoToText = (text: string): Descendant[] => {
-  return text.split("\n").map((line) => ({
-    type: "paragraph",
-    children: [{ text: line }],
-  }));
-};
-
-type CustomElement = {
-  type: "paragraph" | "bulleted-list" | "numbered-list" | "list-item";
-  children: CustomText[];
-  align?: "left" | "center" | "right";
-};
-type CustomText = {
-  text: string;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-};
-
-declare module "slate" {
-  interface CustomTypes {
-    Editor: BaseEditor & ReactEditor;
-    Element: CustomElement;
-    Text: CustomText;
-  }
-}
-const initialValue: Descendant[] = [
-  {
-    type: "paragraph",
-    children: [{ text: "Welcome to npp. Edit this to get started!" }],
-  },
-];
 
 function App() {
   const [editor] = useState(() => withHistory(withReact(createEditor())));
   const [isCodeMode, setIsCodeMode] = useState(false);
   const [slateValue, setSlateValue] = useState<Descendant[]>(initialValue);
   const [monacoValue, setMonacoValue] = useState(slateToText(initialValue));
-
+  const [filePath, setFilePath] = useState("Untitled Npp Document");
+  const [statusMessage, setStatusMessage] = useState("");
+  type SlateMetaData = { align?: "left" | "center" | "right" };
+  const [slateMetaData, setSlateMetaData] = useState<SlateMetaData[]>([]);
   // Toggle between Slate and Monaco editors using Ctrl + Shift + X
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "X") {
         e.preventDefault();
         if (isCodeMode) {
           // Switching to Slate from Monaco
-          const newValue = monacoToText(monacoValue);
-          setSlateValue(newValue);
-          editor.children = newValue; // Update Slate editor state
+          const baseNodes = monacoToText(monacoValue);
+          const restoredNodes = baseNodes.map((node, index) => {
+            const metaData = slateMetaData[index] || {};
+            return { ...node, ...metaData };
+          });
+          setSlateValue(restoredNodes);
+          editor.children = restoredNodes; // Update Slate editor state
           Transforms.select(editor, Editor.start(editor, [])); // Reset selection
         } else {
           // Switching to Monaco from Slate
+          const metaDataToSave = slateValue.map((node) => {
+            if (SlateElement.isElement(node) && node.align) {
+              return { align: node.align };
+            }
+            return {};
+          });
+          setSlateMetaData(metaDataToSave);
           setMonacoValue(slateToText(slateValue));
         }
         setIsCodeMode(!isCodeMode);
@@ -84,7 +63,71 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isCodeMode, monacoValue, slateValue, editor]);
+  }, [isCodeMode, monacoValue, slateValue, editor, slateMetaData]);
+
+  const handleSave = async () => {
+    setStatusMessage(`Saving to ${filePath}...`);
+
+    let contentToSave: string;
+    if (isCodeMode) {
+      contentToSave = monacoValue;
+    } else {
+      contentToSave = JSON.stringify(slateValue);
+    }
+
+    try {
+      const success = await window.electronAPI.showSaveDialog(contentToSave);
+      if (success) {
+        setStatusMessage(`File saved successfully to ${filePath}`);
+      } else {
+        setStatusMessage(`Failed to save file to ${filePath}`);
+      }
+    } catch (error) {
+      console.error("Error saving file", error);
+      setStatusMessage("Error saving file");
+    }
+  };
+
+  const handleOpen = async () => {
+    setStatusMessage("Opening file...");
+    try {
+      const result = await window.electronAPI.showOpenDialog();
+
+      if (result && result.content !== null) {
+        const { filePath, content } = result;
+
+        // Update the file path state
+        setFilePath(filePath);
+
+        // The content from the file is a JSON string, so we must parse it
+        let newSlateValue: Descendant[];
+        try {
+          newSlateValue = JSON.parse(content || "[]");
+        } catch (e) {
+          // If parsing fails, treat it as plain text
+          console.error(
+            "Failed to parse file content as JSON, treating as plain text.",
+            e
+          );
+          newSlateValue = monacoToText(content || "");
+        }
+
+        editor.children = newSlateValue; // Directly update the editor's internal state
+        Transforms.select(editor, Editor.start(editor, [])); // Reset the cursor to the beginning
+
+        // Update both editors with the new content
+        setSlateValue(newSlateValue);
+        setMonacoValue(slateToText(newSlateValue));
+
+        setStatusMessage(`Successfully opened ${filePath}`);
+      } else {
+        setStatusMessage("File open cancelled.");
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
+      setStatusMessage("Error opening file.");
+    }
+  };
 
   const renderLeaf = useCallback((props: LeafProps) => {
     return <Leaf {...props} />;
@@ -108,8 +151,15 @@ function App() {
           editor={editor}
           initialValue={slateValue}
           onChange={setSlateValue}
+          key={filePath}
         >
-          <Toolbar />
+          <Toolbar
+            onSave={handleSave}
+            onOpen={handleOpen}
+            filePath={filePath}
+          />
+
+          {statusMessage && <p className="status-message">{statusMessage}</p>}
           {isCodeMode ? (
             <div className="app-page">
               <Suspense fallback={<div>Loading code editor...</div>}>
