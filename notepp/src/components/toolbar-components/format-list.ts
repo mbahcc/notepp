@@ -19,34 +19,53 @@ export const useList = () => {
   const editor = useSlate();
 
   const toggleList = (listType: ListType) => {
-    const isActive = isListActive(listType);
-    const isList = LIST_TYPES.some((type) => isListActive(type));
+  const isActive = isListActive(listType);
 
-    Transforms.unwrapNodes(editor, {
-      match: (n) =>
-        !Editor.isEditor(n) && isCustomElement(n) && isListType(n.type),
-      split: true,
+  Transforms.unwrapNodes(editor, {
+    match: n =>
+      !Editor.isEditor(n) &&
+      SlateElement.isElement(n) &&
+      LIST_TYPES.includes(n.type as ListType),
+    split: true,
+  });
+
+
+  let alignment: 'left' | 'center' | 'right' | undefined;
+  const { selection } = editor;
+  if (selection) {
+    const [match] = Editor.nodes(editor, {
+      match: n => !Editor.isEditor(n) && SlateElement.isElement(n),
+      mode: 'lowest',
     });
 
-    let newProperties: any;
-    if (isActive) {
-      newProperties = { type: "paragraph" };
-    } else if (isList) {
-      newProperties = { type: "list-item" };
-    } else {
-      newProperties = { type: "list-item" };
+    if (match) {
+      alignment = (match[0] as SlateElement & { align?: 'left' | 'center' | 'right' }).align;
     }
+  }
 
-    Transforms.setNodes(editor, newProperties, {
-      match: (n) =>
-        !Editor.isEditor(n) && isCustomElement(n) && Editor.isBlock(editor, n),
-    });
 
-    if (!isActive) {
-      const block = { type: listType, children: [] };
-      Transforms.wrapNodes(editor, block);
-    }
-  };
+
+
+  Transforms.setNodes<SlateElement>(editor, {
+    type: isActive ? 'paragraph' : 'list-item',
+  });
+
+
+
+  if (!isActive) {
+
+    const block: SlateElement = {
+      type: listType,
+      align: alignment,
+      children: [],
+    };
+ 
+    Transforms.wrapNodes(editor, block);
+  }
+};
+
+  
+
 
   const isListActive = (listType: ListType): boolean => {
     const { selection } = editor;

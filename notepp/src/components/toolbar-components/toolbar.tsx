@@ -1,12 +1,7 @@
 import {
-  FormatBold,
-  FormatItalic,
-  FormatUnderline,
   FormatAlignLeft,
   FormatAlignCenter,
   FormatAlignRight,
-  FormatBulletedList,
-  FormatNumberedList,
   SaveButton,
   OpenFile,
 } from "./index";
@@ -18,12 +13,8 @@ interface ToolbarProps {
 }
 
 function Toolbar({ onSave, onOpen, filePath }: ToolbarProps) {
-  // --- DEBUGGING LINE ---
-  // Let's see what filePath this component receives every time it renders.
   console.log("Toolbar component rendered with filePath:", filePath);
-  // --------------------
 
-  // Extract just the filename from the full path for display.
   const fileName = filePath.split(/[\\/]/).pop() || "Untitled";
 
   return (
@@ -84,15 +75,9 @@ function Toolbar({ onSave, onOpen, filePath }: ToolbarProps) {
                 gap: "10px",
               }}
             >
-              <FormatBold />
-              <FormatItalic />
-              <FormatUnderline />
-              {/* <FormatInsertLink /> */}
               <FormatAlignLeft />
               <FormatAlignCenter />
               <FormatAlignRight />
-              <FormatBulletedList />
-              <FormatNumberedList />
               <SaveButton onSave={onSave} />
               <OpenFile onOpen={onOpen} />
             </div>

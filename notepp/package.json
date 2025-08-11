@@ -7,7 +7,7 @@
   "gypfile": true,
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview",
     "rebuild": "node-gyp rebuild",
@@ -33,6 +33,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
     "eslint": "^9.30.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
@@ -41,5 +42,30 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
     "vite": "^7.0.4"
+  },
+  "build": { 
+    "appId": "com.yourname.notepp",
+    "productName": "Note++",
+    "files": [
+      "dist/**/*", 
+      "electron/**/*",
+      "build/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets", 
+      "output": "release" 
+    },
+    "win": {
+      "target": "nsis", 
+      "icon": "assets/notepp-logo.ico" 
+    },
+    "mac": {
+      "target": "dmg", 
+      "icon": "assets/notepp-logo.icns" 
+    },
+    "linux": {
+      "target": "AppImage", 
+      "icon": "assets/notepp-logo.png" 
+    }
   }
 }

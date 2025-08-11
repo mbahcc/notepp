@@ -1,5 +1,5 @@
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
-import { useList } from "./format-list.tsx";
+import { useList } from "./format-list.ts";
 import { useState } from "react";
 
 function FormatBulletedList() {

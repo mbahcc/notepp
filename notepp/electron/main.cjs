@@ -3,9 +3,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 
-// This is the ONLY require call that should be related to your C++ code.
-// It loads the COMPILED addon.node file, NOT a .cpp source file.
-const addon = require('../build/Release/addon.node');
+const addon = require(path.join(__dirname, '..', 'build', 'Release', 'addon.node'));
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -76,11 +74,11 @@ ipcMain.handle('show-save-dialog', async (event, content) => {
 ipcMain.handle('show-open-dialog', async () => {
   try {
     const result = await dialog.showOpenDialog({
-      title: 'Open Npp Document',
+      title: 'Open Npp File',
       buttonLabel: 'Open',
       properties: ['openFile'],
       filters: [
-        { name: 'npp Documents', extensions: ['npp'] },
+        { name: 'npp Files', extensions: ['npp'] },
         { name: 'All Files', extensions: ['*'] }
       ]
     });
