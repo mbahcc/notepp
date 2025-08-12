@@ -2,20 +2,29 @@
 
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
-const addon = require(path.join(__dirname, '..', 'build', 'Release', 'addon.node'));
+const addonPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'app.asar.unpacked', 'build', 'Release', 'addon.node')
+  : path.join(__dirname, '..', 'build', 'Release', 'addon.node');
 
-const isDev = process.env.NODE_ENV !== 'production';
+
+let addon;
+try {
+  addon = require(addonPath);
+} catch (err) {
+  console.error(' Failed to load C++ addon:', err);
+}
+
+const isDev = !app.isPackaged;
 
 let win;
 
 // --- IPC LISTENERS ---
 
 ipcMain.handle('file:save', (event, filePath, content) => {
-  console.log(`Main process received 'file:save' for path: ${filePath}`);
   try {
     const result = addon.saveFile(filePath, content);
-    console.log(`C++ addon returned: ${result}`); 
     return result;
   } catch (err) {
     console.error("Error calling C++ addon 'saveFile':", err);
@@ -26,7 +35,6 @@ ipcMain.handle('file:save', (event, filePath, content) => {
 
 
 ipcMain.handle('file:read', (event, filePath) => {
-  console.log(`Main process received 'file:read' for path: ${filePath}`);
   try {
     const content = addon.readFile(filePath);
     return content;
@@ -37,7 +45,6 @@ ipcMain.handle('file:read', (event, filePath) => {
 });
 
 ipcMain.handle('show-save-dialog', async (event, content) => {
-  // The 'async' is important here because showSaveDialog is asynchronous
   try {
     const result = await dialog.showSaveDialog({
       title: 'Save Your Npp Document',
@@ -51,8 +58,7 @@ ipcMain.handle('show-save-dialog', async (event, content) => {
 
     // Check if the user cancelled the dialog
     if (result.canceled || !result.filePath) {
-      console.log('User cancelled the save dialog.');
-      return false; // Let the UI know the save was cancelled
+      return false;
     }
 
     const filePath = result.filePath;
@@ -61,7 +67,7 @@ ipcMain.handle('show-save-dialog', async (event, content) => {
       win.setTitle(`Notepp - ${path.basename(filePath)}`);
     }
 
-    // Directly call our C++ addon with the chosen path and content
+
     const success = addon.saveFile(filePath, content);
     return success;
 
@@ -87,12 +93,11 @@ ipcMain.handle('show-open-dialog', async () => {
 
     // Check if the user cancelled the dialog
     if (result.canceled || result.filePaths.length === 0) {
-      console.log('User cancelled the open dialog.');
       return null;
     }
 
     const filePath = result.filePaths[0];
-    console.log(`User selected file to open: ${filePath}`);
+    
 
     if (win) {
       win.setTitle(`Notepp - ${path.basename(filePath)}`);
@@ -115,21 +120,60 @@ ipcMain.handle('show-open-dialog', async () => {
 // --- END OF IPC LISTENERS ---
 
 function createWindow() {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1200,
     height: 600,
     title: "Notepp - Untitled Document",
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: false
     },
+    show: false
   });
+
+   win.once('ready-to-show', () => {
+    console.log('Window ready to show');
+    win.show();
+  });
+
+  win.webContents.on('crashed', (event, killed) => {
+    const errorMsg = 'The renderer process has crashed. This is a critical error.';
+    console.error(`[MAIN PROCESS] ${errorMsg}`);
+    dialog.showErrorBox('Application Error', errorMsg);
+    // Optionally, close the app
+    // app.quit();
+  });
+
+  win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    console.error('Failed to load:', {
+      errorCode,
+      errorDescription,
+      validatedURL,
+      isMainFrame
+    });
+  });
+
+  const indexPath = isDev 
+    ? 'http://localhost:5173'
+    : path.join(__dirname, '..', 'dist', 'index.html');
+    
+  console.log('Loading URL/file:', indexPath);
 
   if (isDev) {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
-  }
+    const htmlPath = path.join(__dirname, '..', 'dist', 'index.html');
+ 
+    if (fs.existsSync(htmlPath)) {
+      win.loadFile(htmlPath);
+    } else {
+      console.error('dist/index.html not found!');
+      win.loadURL(`data:text/html,<h1>Build Error</h1><p>dist/index.html not found</p><p>Path: ${htmlPath}</p>`);
+    }
+   }
 }
 
 app.whenReady().then(() => {
@@ -146,4 +190,12 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });

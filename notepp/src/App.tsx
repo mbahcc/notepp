@@ -12,6 +12,20 @@ import type { LeafProps } from "./components/slate-components/leaf";
 // Load Monaco Editor dynamically
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
+declare global {
+  interface Window {
+    electronAPI: {
+      saveFile: (filePath: string, content: string) => Promise<boolean>;
+      readFile: (filePath: string) => Promise<string | null>;
+      showSaveDialog: (content: string) => Promise<boolean>;
+      showOpenDialog: () => Promise<{
+        filePath: string;
+        content: string;
+      } | null>;
+    };
+  }
+}
+
 function App() {
   const {
     editor,

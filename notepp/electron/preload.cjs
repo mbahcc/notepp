@@ -4,9 +4,22 @@ console.log("--- PRELOAD SCRIPT HAS RUN ---");
 
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('electronAPI', {
-  saveFile: (filePath, content) => ipcRenderer.invoke('file:save', filePath, content),
-  readFile: (filePath) => ipcRenderer.invoke('file:read', filePath),
-  showSaveDialog: (content) => ipcRenderer.invoke('show-save-dialog', content),
-  showOpenDialog: () => ipcRenderer.invoke('show-open-dialog')
-});
+try {
+  contextBridge.exposeInMainWorld('electronAPI', {
+    saveFile: (filePath, content) => {
+      return ipcRenderer.invoke('file:save', filePath, content);
+    },
+    readFile: (filePath) => {
+      return ipcRenderer.invoke('file:read', filePath);
+    },
+    showSaveDialog: (content) => {
+      return ipcRenderer.invoke('show-save-dialog', content);
+    },
+    showOpenDialog: () => {
+      return ipcRenderer.invoke('show-open-dialog');
+    }
+  });
+  
+} catch (error) {
+  console.error("❌ PRELOAD SCRIPT ERROR:", error);
+}

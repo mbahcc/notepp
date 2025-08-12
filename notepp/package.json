@@ -1,13 +1,19 @@
 {
   "name": "notepp",
   "private": true,
-  "version": "0.0.0",
+  "description": "A note-taking app built with Electron and React",
+  "author": "Collins Mbah",
+  "version": "1.0.0",
   "type": "module",
   "main": "electron/main.cjs",
   "gypfile": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build && electron-builder",
+    "build:clean": "rm -rf dist release && npm run build",
+    "build:electron": "npm run build && electron-builder",
+    "electron:dev": "electron .",
+    "electron:pack": "electron-builder",
     "lint": "eslint .",
     "preview": "vite preview",
     "rebuild": "node-gyp rebuild",
@@ -49,23 +55,14 @@
     "files": [
       "dist/**/*", 
       "electron/**/*",
-      "build/**/*"
+      "build/Release/addon.node"
     ],
     "directories": {
       "buildResources": "assets", 
       "output": "release" 
     },
-    "win": {
-      "target": "nsis", 
-      "icon": "assets/notepp-logo.ico" 
-    },
-    "mac": {
-      "target": "dmg", 
-      "icon": "assets/notepp-logo.icns" 
-    },
-    "linux": {
-      "target": "AppImage", 
-      "icon": "assets/notepp-logo.png" 
-    }
+    "asarUnpack": [
+      "build/Release/addon.node"
+    ] 
   }
 }
