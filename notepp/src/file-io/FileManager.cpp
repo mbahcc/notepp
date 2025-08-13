@@ -3,6 +3,13 @@
 #include <sstream>
 #include <iostream>
 
+/**
+ * @brief Saves content to a file with comprehensive error handling
+ * @param filePath The full path where the file should be saved
+ * @param content The text content to write to the file
+ * @return true if file was saved successfully, false otherwise
+ */
+
 bool FileManager::saveFile(const std::string &filePath, const std::string &content) const
 {
 
@@ -16,7 +23,7 @@ bool FileManager::saveFile(const std::string &filePath, const std::string &conte
 
     try
     {
-
+        // Enable exception throwing for stream errors
         outFile.exceptions(std::ofstream::badbit | std::ofstream::failbit);
 
         outFile << content;
@@ -40,6 +47,12 @@ bool FileManager::saveFile(const std::string &filePath, const std::string &conte
     }
 }
 
+/**
+ * @brief Reads content from a file with comprehensive error handling
+ * @param filePath The full path of the file to read
+ * @return Optional string containing file content, or nullopt if read failed
+ */
+
 std::optional<std::string> FileManager::readFile(const std::string &filePath) const
 {
     std::ifstream inFile(filePath);
@@ -52,8 +65,10 @@ std::optional<std::string> FileManager::readFile(const std::string &filePath) co
 
     try
     {
+        // Enable exception throwing for stream errors
         inFile.exceptions(std::ifstream::badbit | std::ifstream::failbit);
 
+        // Read entire file into string buffer
         std::stringstream buffer;
         buffer << inFile.rdbuf();
         return buffer.str();

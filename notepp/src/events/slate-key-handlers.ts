@@ -4,6 +4,13 @@ import React from "react";
 import { ReactEditor } from "slate-react";
 import { HistoryEditor } from "slate-history";
 
+
+/**
+ * Toggle text formatting marks (bold, italic, underline)
+ * @param editor The Slate editor instance
+ * @param format The formatting type to toggle
+ */
+
 const toggleMark = (editor: Editor, format: 'bold' | 'italic' | 'underline') => {
     const isActive = Editor.marks(editor)?.[format] === true;
     if (isActive) {
@@ -12,6 +19,12 @@ const toggleMark = (editor: Editor, format: 'bold' | 'italic' | 'underline') => 
         Editor.addMark(editor, format, true);
     }
 };
+
+/**
+ * Handles keyboard shortcuts and special key behaviors for the Slate editor
+ * @param event The keyboard event
+ * @param editor The Slate editor instance with React and History extensions
+ */
 
 export const handleSlateKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, editor: Editor & ReactEditor & HistoryEditor) => {
     // Handle indentation with Tab
@@ -25,6 +38,7 @@ export const handleSlateKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, e
     if (event.key === "Backspace") {
         const { selection } = editor;
         if (selection && Range.isCollapsed(selection)) {
+            // Check if cursor is in a list item
             const [match] = Editor.nodes(editor, {
                 match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'list-item',
             });
@@ -32,9 +46,10 @@ export const handleSlateKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, e
             if (match) {
                 const [, path] = match;
                 const start = Editor.start(editor, path);
-
+                // If cursor is at the very beginning of the list item
                 if (Point.equals(selection.anchor, start)) {
                     event.preventDefault();
+                    // Remove the list wrapper and convert to paragraph
                     Transforms.unwrapNodes(editor, {
                         match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && (n.type === 'bulleted-list' || n.type === 'numbered-list'),
                         split: true,
@@ -51,19 +66,19 @@ export const handleSlateKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, e
 
     // Handle formatting shortcuts
     switch (event.key) {
-        case "b":
+        case "b": // Ctrl+B for bold
             event.preventDefault();
             toggleMark(editor, 'bold');
             break;
-        case "i":
+        case "i": // Ctrl+I for italic
             event.preventDefault();
             toggleMark(editor, 'italic');
             break;
-        case "u":
+        case "u": // Ctrl+U for underline
             event.preventDefault();
             toggleMark(editor, 'underline');
             break;
-        case "z":
+        case "z":  // Ctrl+Z for undo, Ctrl+Shift+Z for redo
             event.preventDefault();
             if (event.shiftKey) {
                 editor.redo();

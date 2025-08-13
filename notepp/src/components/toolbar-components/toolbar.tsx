@@ -13,8 +13,6 @@ interface ToolbarProps {
 }
 
 function Toolbar({ onSave, onOpen, filePath }: ToolbarProps) {
-  console.log("Toolbar component rendered with filePath:", filePath);
-
   const fileName = filePath.split(/[\\/]/).pop() || "Untitled";
 
   return (

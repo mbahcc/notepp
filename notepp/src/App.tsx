@@ -12,6 +12,7 @@ import type { LeafProps } from "./components/slate-components/leaf";
 // Load Monaco Editor dynamically
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
+// Extend Window interface for Electron IPC communication
 declare global {
   interface Window {
     electronAPI: {
@@ -40,6 +41,7 @@ function App() {
     handleOpen,
   } = useEditor();
 
+  // Memoized render functions to prevent unnecessary re-renders
   const renderLeaf = useCallback((props: LeafProps) => {
     return <Leaf {...props} />;
   }, []);
@@ -71,7 +73,7 @@ function App() {
           />
 
           {statusMessage && <p className="status-message">{statusMessage}</p>}
-
+          {/* Conditional rendering: Monaco for code mode, Slate for rich text */}
           {isCodeMode ? (
             <div className="app-page">
               <Suspense fallback={<div>Loading code editor...</div>}>
@@ -91,6 +93,7 @@ function App() {
             </div>
           ) : (
             <div className="app-page">
+              {/* Rich text editor with custom rendering */}
               <Editable
                 renderLeaf={renderLeaf}
                 renderElement={renderElement}

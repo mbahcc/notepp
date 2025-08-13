@@ -21,5 +21,5 @@ try {
   });
   
 } catch (error) {
-  console.error("❌ PRELOAD SCRIPT ERROR:", error);
+  console.error("PRELOAD SCRIPT ERROR:", error);
 }

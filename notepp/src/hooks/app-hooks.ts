@@ -11,7 +11,7 @@ import { withHistory, HistoryEditor } from "slate-history";
 import { monacoToText, slateToText } from "../functions/slate-functions";
 import { initialValue } from "../constants/app-constants";
 
-
+// Define the return type for the useEditor hook
 export interface EditorHook {
   editor: Editor & ReactEditor & HistoryEditor;
   isCodeMode: boolean;
@@ -25,7 +25,10 @@ export interface EditorHook {
   handleOpen: () => Promise<void>;
 }
 
-
+/**
+ * Custom hook that manages the dual-mode editor state and file operations
+ * Handles switching between rich text (Slate) and code (Monaco) modes
+ */
 export const useEditor = (): EditorHook => {
   const [editor] = useState(() => withHistory(withReact(createEditor())));
   const [isCodeMode, setIsCodeMode] = useState(false);
@@ -33,11 +36,12 @@ export const useEditor = (): EditorHook => {
 const [monacoValue, setMonacoValue] = useState(slateToText(initialValue));
   const [filePath, setFilePath] = useState("Untitled Npp Document");
   const [statusMessage, setStatusMessage] = useState("Editor Ready");
+    // Store formatting metadata when switching to code mode
     const [slateMetadata, setSlateMetadata] = useState<Partial<SlateElement>[]>([]);
 
 
 
-  // To handle the keyboard shortcut for switching between mode
+  // To handle the keyboard shortcut for switching between mode (Ctrl + Shift + X)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "X") {
@@ -48,9 +52,10 @@ const [monacoValue, setMonacoValue] = useState(slateToText(initialValue));
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []); 
-
+// Handle mode switching and preserve formatting metadata
 useEffect(() => {
     if (isCodeMode) {
+      // Save formatting metadata before converting to plain text
       const metadataToSave = slateValue.map((node) => {
         if (SlateElement.isElement(node)) {
           const { children, ...meta } = node;
@@ -61,6 +66,7 @@ useEffect(() => {
       setSlateMetadata(metadataToSave);
       setMonacoValue(slateToText(slateValue));
     } else {
+      // Restore formatting when switching back to rich text mode
        const baseNodes = monacoToText(monacoValue);
       const restoredNodes = baseNodes.map((node, index) => {
         const metadata = slateMetadata[index] || {};
@@ -75,6 +81,7 @@ useEffect(() => {
   const handleSave = async () => {
     setStatusMessage(`Saving to ${filePath}...`);
 
+    // Save different content based on current mode
     const contentToSave = isCodeMode 
         ? monacoValue 
         : JSON.stringify(slateValue);

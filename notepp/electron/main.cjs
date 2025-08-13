@@ -1,14 +1,15 @@
-// electron/main.cjs
+// Main Electron process - handles window creation, file operations, and native dialogs
 
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Determine the path to the C++ addon based on whether the app is packaged or in development
 const addonPath = app.isPackaged
   ? path.join(process.resourcesPath, 'app.asar.unpacked', 'build', 'Release', 'addon.node')
   : path.join(__dirname, '..', 'build', 'Release', 'addon.node');
 
-
+// Try to load the C++ addon module
 let addon;
 try {
   addon = require(addonPath);
@@ -20,8 +21,9 @@ const isDev = !app.isPackaged;
 
 let win;
 
-// --- IPC LISTENERS ---
+// IPC LISTENERS 
 
+// Handle file save requests from renderer process
 ipcMain.handle('file:save', (event, filePath, content) => {
   try {
     const result = addon.saveFile(filePath, content);
@@ -33,7 +35,7 @@ ipcMain.handle('file:save', (event, filePath, content) => {
 });
 
 
-
+// Handle file read requests from renderer process
 ipcMain.handle('file:read', (event, filePath) => {
   try {
     const content = addon.readFile(filePath);
@@ -44,6 +46,7 @@ ipcMain.handle('file:read', (event, filePath) => {
   }
 });
 
+// Handle showing the save dialog and saving the file
 ipcMain.handle('show-save-dialog', async (event, content) => {
   try {
     const result = await dialog.showSaveDialog({
@@ -63,11 +66,13 @@ ipcMain.handle('show-save-dialog', async (event, content) => {
 
     const filePath = result.filePath;
     console.log(`User selected path: ${filePath}`);
+
+    // Update window title with the new filename
     if (win) {
       win.setTitle(`Notepp - ${path.basename(filePath)}`);
     }
 
-
+        // Save the file using the C++ addon
     const success = addon.saveFile(filePath, content);
     return success;
 
@@ -77,6 +82,7 @@ ipcMain.handle('show-save-dialog', async (event, content) => {
   }
 });
 
+// Handle showing the open dialog and reading the file
 ipcMain.handle('show-open-dialog', async () => {
   try {
     const result = await dialog.showOpenDialog({
@@ -117,8 +123,6 @@ ipcMain.handle('show-open-dialog', async () => {
 
 
 
-// --- END OF IPC LISTENERS ---
-
 function createWindow() {
   win = new BrowserWindow({
     width: 1200,
@@ -138,14 +142,14 @@ function createWindow() {
     win.show();
   });
 
+  // Handle renderer process crashes
   win.webContents.on('crashed', (event, killed) => {
     const errorMsg = 'The renderer process has crashed. This is a critical error.';
     console.error(`[MAIN PROCESS] ${errorMsg}`);
     dialog.showErrorBox('Application Error', errorMsg);
-    // Optionally, close the app
-    // app.quit();
   });
 
+  // Handle page load failures
   win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
     console.error('Failed to load:', {
       errorCode,
@@ -170,6 +174,7 @@ function createWindow() {
     if (fs.existsSync(htmlPath)) {
       win.loadFile(htmlPath);
     } else {
+      // Fallback if built files are missing
       console.error('dist/index.html not found!');
       win.loadURL(`data:text/html,<h1>Build Error</h1><p>dist/index.html not found</p><p>Path: ${htmlPath}</p>`);
     }
@@ -192,10 +197,12 @@ app.on('window-all-closed', () => {
   }
 });
 
+// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
 });
 
+// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
