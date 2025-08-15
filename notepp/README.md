@@ -9,16 +9,23 @@ Ultimately, the core vision is to provide a seamless workspace for hybrid “tex
 ## Key Features
 
 **Hybrid Rich-Text and C++ Code Editing**: A rich-text editor for notes and a separate C++ code editor powered by the engine of VS Code.
+
 **View-switching with Ctrl+Shift+X**: Instantly toggle between editor views with a simple keyboard shortcut.
+
 **Text alignment for rich-text documents**: Includes essential formatting options like text alignment to provide natural structure to your documents.
+
 **Intelligent file handling**: The application creates its own rich-text files(.npp) and opens those in the rich-text editor, opening other files in the code editor directly.
+
 **Native desktop experience for file saving and opening**: Built with Electron to feature system dialogs for saving and opening files.
 
 ## Tech Stack
 
 **Frameworks**: Electron, React, Vite
+
 **Languages**: TypeScript, C++
+
 **Editors**: Slate.js, Monaco Editor
+
 **Build Tools**: electron-builder, node-gyp
 
 ## Architecture & Design Tradeoffs 
@@ -30,7 +37,11 @@ There are some trade-offs with this model. It isn't possible to save "text effec
 ## Getting Started
 
 git clone https://github.com/mbahcc/notepp.git
+
 cd notepp
+
 npm install
+
 npm run rebuild 
+
 npm run dev
